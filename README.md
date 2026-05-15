@@ -123,7 +123,7 @@ Results land under `results/{root,leaf}/{dataset_id}/`. Pretraining is optional;
 
 
 ## 7. Generate figures
-If evaluate/finetune_root.sh and evaluate/finetune_leaf.sh are ran, then the replication of paper main figures can be done through:
+If evaluate/finetune_leaf.sh is ran, then the replication of paper main figures can be done through:
 
 ```bash
 FIG_ARGS=(
