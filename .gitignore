@@ -1,0 +1,17 @@
+/results
+/scripts
+/mlruns
+/docs
+/logs
+/.cache
+/.claude
+/data
+/checkpoints
+/model/weights
+CLAUDE.md
+evaluate/mock
+.env
+
+*.pyc
+*__init__*.py
+*__pycache__*
