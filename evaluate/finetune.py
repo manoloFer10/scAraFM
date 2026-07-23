@@ -765,20 +765,26 @@ if __name__ == "__main__":
 
     with init_experiment_run(exp_name, run_name,
                             tags={"dataset": args.dataset_id}) as parent_id:
-        run_pipeline(
-            scbert_model=model,
-            dataset_path=args.dataset_path,
-            dataset_id=args.test_dataset_id,
-            data_dict=data,
-            parent_run=parent_id,                     
-            lr_frozen=args.lr_frozen,
-            lr_finetune_head=args.lr_finetune_head,
-            lr_finetune_all=args.lr_finetune_all,
-            lr_full=args.lr_full,
-            train_count=train_count,
-            seed=int(args.seed),
-            is_all=is_all,
-            do_grid_search_cv=args.do_grid_search_cv,
-            results_dir=args.results_dir,
-            split_strategy=args.split_strategy,
-        )
+        try:
+            run_pipeline(
+                scbert_model=model,
+                dataset_path=args.dataset_path,
+                dataset_id=args.test_dataset_id,
+                data_dict=data,
+                parent_run=parent_id,
+                lr_frozen=args.lr_frozen,
+                lr_finetune_head=args.lr_finetune_head,
+                lr_finetune_all=args.lr_finetune_all,
+                lr_full=args.lr_full,
+                train_count=train_count,
+                seed=int(args.seed),
+                is_all=is_all,
+                do_grid_search_cv=args.do_grid_search_cv,
+                results_dir=args.results_dir,
+                split_strategy=args.split_strategy,
+            )
+        except ValueError as e:
+            if "remain after test split" in str(e):
+                print(f"Skipping finetuning job (train_count={args.train_count}): {e}")
+            else:
+                raise
