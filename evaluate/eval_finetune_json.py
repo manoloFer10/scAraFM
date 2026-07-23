@@ -77,7 +77,7 @@ def compute_metrics(y_true: list, y_pred: list, n_bootstrap: int = 100, random_s
         print(f"  Warning: Length mismatch - y_true={len(y_true)}, y_pred={len(y_pred)}. Skipping.")
         return None
 
-    n_samples = len(y_true)
+    n_samples = len(y_true) // n_bootstrap
     rng = np.random.RandomState(random_state)
 
     successes = (y_true == y_pred).astype(int)
@@ -96,7 +96,7 @@ def compute_metrics(y_true: list, y_pred: list, n_bootstrap: int = 100, random_s
     aucroc_samples = []
 
     for _ in range(n_bootstrap):
-        indices = rng.choice(n_samples, size=n_samples, replace=True)
+        indices = rng.choice(len(y_true), size=n_samples, replace=True)
         y_true_boot = y_true[indices]
         y_pred_boot = y_pred[indices]
 
@@ -196,8 +196,13 @@ def parse_model_info(battery_name: str, model_name: str) -> dict:
     return info
 
 
-def load_and_process_json(json_path: str, hide_pca: bool = False) -> pd.DataFrame:
-    """Load a single experiment_results*.json and compute per-model metrics."""
+def load_and_process_json(json_path: str, hide_pca: bool = False, n_bootstrap: int = 10) -> pd.DataFrame:
+    """Load a single experiment_results*.json and compute per-model metrics.
+
+    ``n_bootstrap`` controls the number of bootstrap resamples used to estimate the
+    per-metric standard deviation (the ``*_std`` columns, e.g. the ``±std`` shown in the
+    heatmap cells).
+    """
     with open(json_path, "r") as f:
         data = json.load(f)
 
@@ -231,7 +236,7 @@ def load_and_process_json(json_path: str, hide_pca: bool = False) -> pd.DataFram
                 if model_info["model_family"] is None:
                     continue
 
-                metrics = compute_metrics(y_true, y_pred, n_bootstrap=10)
+                metrics = compute_metrics(y_true, y_pred, n_bootstrap=n_bootstrap)
                 if metrics is None:
                     continue
 
@@ -248,12 +253,16 @@ def load_and_process_json(json_path: str, hide_pca: bool = False) -> pd.DataFram
     return pd.DataFrame(records)
 
 
-def load_all_results(json_files: list, hide_pca: bool = False) -> pd.DataFrame:
-    """Load and concatenate multiple experiment_results*.json files."""
+def load_all_results(json_files: list, hide_pca: bool = False, n_bootstrap: int = 10) -> pd.DataFrame:
+    """Load and concatenate multiple experiment_results*.json files.
+
+    ``n_bootstrap`` is forwarded to :func:`load_and_process_json` to control the bootstrap
+    resampling used for the ``*_std`` columns.
+    """
     all_dfs = []
     for json_file in json_files:
         print(f"Loading: {json_file}")
-        df = load_and_process_json(json_file, hide_pca=hide_pca)
+        df = load_and_process_json(json_file, hide_pca=hide_pca, n_bootstrap=n_bootstrap)
         if not df.empty:
             all_dfs.append(df)
             print(f"  Found {len(df)} records across {df['train_count'].nunique()} train counts")
