@@ -10,7 +10,7 @@ MASK_PROBABILITY=${MASK_PROBABILITY:=0.20}
 MAX_EPOCHS=${MAX_EPOCHS:=50}
 
 
-GPU=${GPU:=1}
+GPU=${GPU:=0}
 export CUDA_VISIBLE_DEVICES=$GPU
 
 echo "Running training on gpu=${GPU} with depth=${DEPTH}, n_heads=${HEADS}, embedding_dim =${EMBEDDING_DIM}, batch_size=${BATCH_SIZE}, learning_rate=${LEARNING_RATE}, mask_probability=${MASK_PROBABILITY}..."
