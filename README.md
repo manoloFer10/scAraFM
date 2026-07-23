@@ -5,8 +5,11 @@ A single-cell foundation model for *Arabidopsis thaliana*. Two tissue-specific P
 This repo packages the end-to-end workflow to reproduce pretraining and downstream evaluation.
 
 ## 1. Setup
+First, clone the repository and create the Conda environment:
 
 ```bash
+git clone https://github.com/manoloFer10/scAraFM.git
+cd scAraFM
 conda env create -f environment.yml
 conda activate scAraFM
 ```
@@ -15,9 +18,10 @@ A CUDA-capable GPU is required for pretraining and embedding generation. Check 5
 
 
 ## 2. Download data
+Run the following command to download the data and pretrained weights. Note that approximately 15 GB of free disk space is required.
 
 ```bash
-python data_download/download_data.py
+python data/download_data.py
 ```
 
 This populates [data/](data/) with:

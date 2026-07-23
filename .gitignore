@@ -5,13 +5,14 @@
 /logs
 /.cache
 /.claude
-/data
+/data/scAra*
 /checkpoints
 /model/weights
 CLAUDE.md
 evaluate/mock
 .env
 
+*.gz
 *.pyc
 *__init__*.py
 *__pycache__*
