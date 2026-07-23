@@ -24,34 +24,25 @@ Run the following command to download the data and pretrained weights. Note that
 python data/download_data.py
 ```
 
-This populates [data/](data/) with:
+This populates [data/](data/) with pretraining splits and+ supervised evaluation datasets.
 
-- `scAraFM_Root/` — root pretraining splits + supervised evaluation datasets
-- `scAra_Leaf/`   — leaf pretraining splits + supervised evaluation datasets
+Each tissue ships a `consensus_hvg.csv` defining the gene vocabulary.
 
-Each tissue ships a `consensus_hvg.csv` defining the gene vocabulary (root: 4397 genes, leaf: 4054 genes).
-
-The download also places pretrained model weights under [model/weights/](model/weights/), so pretraining is optional (see 3).
+The download also places pretrained model weights under [model/weights/](model/weights/).
 
 ## 3. Pretrain
+Run the scripts below to train the model backbones from scratch. Note that this pretraining is optional and can take a significant amount of time (depending on your hardware). Since the pretrained weights were already downloaded in Step 2, you can skip this step and proceed directly to Section 4.
 
 ```bash
-bash model/train_root.sh   # root backbone
-bash model/train_leaf.sh   # leaf backbone
+bash model/train_leaf.sh   
+bash model/train_root.sh   
 ```
 
 Both wrappers `cd` to the repo root and invoke `python -m model.train` with the tissue-appropriate `--gene_num` and data paths. Defaults: depth 3, batch size 20, embedding dim 200, 10 heads, LR 1e-4, mask prob 0.20, 50 epochs.
 
-Pretrained weights are downloaded automatically in 2 and live in [model/weights/](model/weights/). You can skip this step and use them directly:
-
-- [model/weights/scAraFM_root/artifacts/checkpoints/best_model_32.pth](model/weights/scAraFM_root/artifacts/checkpoints/best_model_32.pth)
-- [model/weights/scAraFM_leaf/artifacts/checkpoints/best_model_17.pth](model/weights/scAraFM_leaf/artifacts/checkpoints/best_model_17.pth)
-
-MLflow logs are written to `./mlruns/` (file backend). Best-by-val checkpoints are saved in `./checkpoints/{run_id}/best_model_{epoch}.pth`.
-
 If you train your own model and want to evaluate it, update the `CKPT_PATH` variable at the top of [evaluate/finetune_root.sh](evaluate/finetune_root.sh) or [evaluate/finetune_leaf.sh](evaluate/finetune_leaf.sh) to point at your new checkpoint before running 4.
 
-## 4. Fine-tune / evaluate
+## 4. Fine-tune and evaluate
 
 ```bash
 bash evaluate/finetune_leaf.sh   # 4 leaf datasets:  4 random split + 1 replicate split + 2 cross-experiment blocks
@@ -88,7 +79,16 @@ Peak host RAM is dominated by the AnnData load and the ModelBattery classifiers 
 
 Per-dataset cache sizes are computed exactly from the formula above using cell counts read directly from each `.h5ad` file:
 
-**Root** (4397 genes, 3.52 MB cache / cell):
+**Leaf**:
+
+| Dataset    | Cells  | h5ad on disk | Cache   |
+|------------|-------:|-------------:|--------:|
+| GSE226826  | 67,961 | 105 MB       | 220 GB  |
+| SRP398011  | 22,882 | 173 MB       | 74 GB   |
+| GSE273033  |  4,035 | 366 MB       | 13 GB   |
+| ERP132245  |  2,018 | 15 MB        | 7 GB    |
+
+**Root**:
 
 | Dataset    | Cells  | h5ad on disk | Cache   |
 |------------|-------:|-------------:|--------:|
@@ -98,16 +98,8 @@ Per-dataset cache sizes are computed exactly from the formula above using cell c
 | SRP285817  | 17,553 | 67 MB        | 62 GB   |
 | SRP166333  | 16,949 | 85 MB        | 60 GB   |
 
-**Leaf** (4054 genes, 3.24 MB cache / cell):
 
-| Dataset    | Cells  | h5ad on disk | Cache   |
-|------------|-------:|-------------:|--------:|
-| GSE226826  | 67,961 | 105 MB       | 220 GB  |
-| SRP398011  | 22,882 | 173 MB       | 74 GB   |
-| GSE273033  |  4,035 | 366 MB       | 13 GB   |
-| ERP132245  |  2,018 | 15 MB        | 7 GB    |
-
-**Recommended free disk: ≥130 GB for root evaluation, ≥220 GB for leaf evaluation** (per-dataset peak; the cache is written to a temp file that survives if the process is killed by signal — sweep `cache/` before relaunching).
+**Recommended free disk: ≥130 GB for root evaluation, ≥220 GB for leaf evaluation**.
 
 ## 6. Reproduce results 
 
