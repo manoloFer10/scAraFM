@@ -107,13 +107,13 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--replicate-json-path",
         type=str,
-        default="results/final_leaf(jsons)/results/final_leaf/GSE273033/experiment_results.json",
+        default="results/final_leaf/GSE273033/experiment_results.json",
         help="Replicate-split JSON path for GSE273033",
     )
     p.add_argument(
         "--cross-json-path",
         type=str,
-        default="results/final_leaf(jsons)/results/final_leaf/GSE273033_2_ERP132245/experiment_results_GSE273033_to_ERP132245.json",
+        default="results/final_leaf/GSE273033_2_ERP132245/experiment_results_GSE273033_to_ERP132245.json",
         help="Cross-split JSON path for GSE273033 -> ERP132245",
     )
     p.add_argument(
@@ -219,12 +219,17 @@ def append_random_split_full_dataset(
     results_df: pd.DataFrame,
     random_json_path: Path,
     alias_dataset_id: str = "GSE273033_random",
+    n_bootstrap: int = 10,
 ) -> pd.DataFrame:
-    """Append all train-count rows for random-split GSE273033 as a distinct dataset id."""
+    """Append all train-count rows for random-split GSE273033 as a distinct dataset id.
+
+    ``n_bootstrap`` is forwarded to :func:`load_and_process_json` so the appended rows'
+    ``*_std`` columns use the same bootstrap resampling as the rest of the table.
+    """
     if not random_json_path.exists():
         return results_df
 
-    random_df = load_and_process_json(str(random_json_path), hide_pca=False)
+    random_df = load_and_process_json(str(random_json_path), hide_pca=False, n_bootstrap=n_bootstrap)
     if random_df.empty:
         return results_df
 

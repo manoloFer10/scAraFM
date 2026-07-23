@@ -96,13 +96,13 @@ def parse_args() -> argparse.Namespace:
     p.add_argument(
         "--replicate-json-path",
         type=str,
-        default="results/final_leaf(jsons)/results/final_leaf/GSE273033/experiment_results.json",
+        default="results/final_leaf/GSE273033/experiment_results.json",
         help="Replicate-split JSON path for GSE273033",
     )
     p.add_argument(
         "--cross-json-path",
         type=str,
-        default="results/final_leaf(jsons)/results/final_leaf/GSE273033_2_ERP132245/experiment_results_GSE273033_to_ERP132245.json",
+        default="results/final_leaf/GSE273033_2_ERP132245/experiment_results_GSE273033_to_ERP132245.json",
         help="Cross-split JSON path for GSE273033 -> ERP132245",
     )
     p.add_argument(

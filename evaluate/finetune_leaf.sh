@@ -101,7 +101,7 @@ do
         --tissue Leaf \
         --seed 42 \
         --do_grid_search_cv \
-        --results_dir "results/leaf_cross/$TRAIN_DATASET_ID" \
+        --results_dir "results/leaf/${TRAIN_DATASET_ID}_2_${TEST_DATASET_ID}" \
         --test_dataset_path $TEST_DATASET_PATH \
         --test_dataset_id $TEST_DATASET_ID
 done
@@ -131,7 +131,7 @@ do
         --tissue Leaf \
         --seed 42 \
         --do_grid_search_cv \
-        --results_dir "results/leaf_cross/$TRAIN_DATASET_ID" \
+        --results_dir "results/leaf/${TRAIN_DATASET_ID}_2_${TEST_DATASET_ID}" \
         --test_dataset_path $TEST_DATASET_PATH \
         --test_dataset_id $TEST_DATASET_ID
 done
@@ -164,8 +164,8 @@ python -m evaluate.extract_results \
 
 # Cross-experiment runs -> dataset_id parsed from "experiment_results_<train>_to_<test>.json"
 python -m evaluate.extract_results \
-    --results_dir results/leaf_cross/GSE273033 \
+    --results_dir results/leaf/GSE273033_2_ERP132245 \
     --output_path results/final_leaf/GSE273033_2_ERP132245/experiment_results_GSE273033_to_ERP132245.json
 python -m evaluate.extract_results \
-    --results_dir results/leaf_cross/SRP398011 \
+    --results_dir results/leaf/SRP398011_2_GSE226826 \
     --output_path results/final_leaf/SRP398011_2_GSE226826/experiment_results_SRP398011_to_GSE226826.json

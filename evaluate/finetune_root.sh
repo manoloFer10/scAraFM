@@ -72,12 +72,22 @@ do
 done
 
 # ============ EXTRACT JSON RESULTS ============
-# Writes <results_dir>/experiment_results.json for each finetune output above.
+# Consolidate into results/final_root/<dataset_id>/experiment_results.json, the layout
+# read by the root figure scripts (create_root_heatmap / create_subplot_matrix_figure).
+# DEFAULT_LEAF_GROUPS maps the 4 SRP datasets -> Random Split and GSE235495 -> Replicate
+# Split, so GSE235495's Replicate run is the one carried into the figures (its random run
+# under results/root/GSE235495 is not consumed).
 
-for TRAIN_DATASET_ID in GSE235495 SRP148288 SRP166333 SRP169576 SRP285817; do
-    python -m evaluate.extract_results --results_dir "results/root/$TRAIN_DATASET_ID"
+mkdir -p results/final_root
+
+# Random splits -> Random Split group
+for TRAIN_DATASET_ID in SRP148288 SRP166333 SRP169576 SRP285817; do
+    python -m evaluate.extract_results \
+        --results_dir "results/root/$TRAIN_DATASET_ID" \
+        --output_path "results/final_root/$TRAIN_DATASET_ID/experiment_results.json"
 done
 
-for TRAIN_DATASET_ID in GSE235495; do
-    python -m evaluate.extract_results --results_dir "results/root_replicate/${TRAIN_DATASET_ID}_replicate"
-done
+# Replicate split for GSE235495 -> dataset_id "GSE235495" -> Replicate Split group
+python -m evaluate.extract_results \
+    --results_dir "results/root_replicate/GSE235495_replicate" \
+    --output_path "results/final_root/GSE235495/experiment_results.json"

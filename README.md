@@ -123,21 +123,14 @@ Results land under `results/{root,leaf}/{dataset_id}/`. Pretraining is optional;
 
 
 ## 7. Generate figures
-If evaluate/finetune_leaf.sh is ran, then the replication of paper main figures can be done through:
 
-```bash
-FIG_ARGS=(
-    --final-leaf-dir results/final_leaf
-    --random-results-dir results/leaf/GSE273033
-    --random-json-path results/GSE_RANDOM_SPLIT/GSE273033/experiment_results.json
-    --replicate-json-path results/final_leaf/GSE273033/experiment_results.json
-    --cross-json-path results/final_leaf/GSE273033_2_ERP132245/experiment_results_GSE273033_to_ERP132245.json
-)
+Run from the repo root after 4/6 produces the evaluation results. Each script writes a
+`.png` + matching `.svg` under `evaluation/figure_creation/`, and defaults to `--metric aucroc`.
 
-python -m figures.create_composite_figure "${FIG_ARGS[@]}" \
-    --outpath figures/composite_leaf_4panel_aucroc.png
+| Paper figure | Command | Output |
+|---|---|---|
+| **Figure 2** | `python -m figures.create_3panel_figure_heatmap` | `evaluation/figure_creation/composite_leaf_3panel_aucroc_heatmap.png` |
+| **Sup. Figure 1**  | `python -m figures.create_subplot_matrix_figure --outdir evaluation/figure_creation/leaf --n-bootstrap 100` | `evaluation/figure_creation/leaf/subplot_matrix_aucroc_bootstrap100.png` |
+| **Sup. Figure 2**  | `python -m figures.create_subplot_matrix_figure --results-dir results/final_root --outdir evaluation/figure_creation/root --n-bootstrap 100 --random-results-dir "" --random-json-path ""` | `evaluation/figure_creation/root/subplot_matrix_aucroc_bootstrap100.png` |
+| **Sup. Figure 3**  | `python -m figures.create_root_heatmap` | `evaluation/figure_creation/root_heatmap_aucroc.png` |
 
-python -m figures.create_3panel_figure "${FIG_ARGS[@]}" \
-    --outpath figures/composite_leaf_3panel_aucroc.png
-
-```
