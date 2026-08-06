@@ -266,6 +266,9 @@ def main():
     results_serializable = convert_to_serializable(results)
     
     # Save to JSON
+    out_dir = os.path.dirname(os.path.abspath(args.output_path))
+    os.makedirs(out_dir, exist_ok=True)
+
     with open(args.output_path, 'w') as f:
         json.dump(results_serializable, f, indent=2)
     
