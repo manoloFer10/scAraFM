@@ -1,6 +1,6 @@
 # scAraFM
 
-A single-cell foundation model for *Arabidopsis thaliana*. Two tissue-specific Performer-based masked-language-model backbones (root and leaf) are pretrained on scRNA-seq expression bins, then evaluated by fine-tuning on supervised tasks (cell-type and stress-condition classification).
+This repository contains the source code and download the data required to reproduce the results presented in “On the robustness of scRNA-seq foundation models for plant perturbation response prediction under cross-experiment shift” (under consideration for publication). A preprint of the manuscript is available at [![bioRxiv](https://doi.org/10.64898/2026.08.21.746324)]
 
 This repo packages the end-to-end workflow to reproduce pretraining and downstream evaluation.
 
@@ -24,40 +24,51 @@ Run the following command to download the data and pretrained weights. Note that
 python data/download_data.py
 ```
 
-This populates [data/](data/) with pretraining splits and+ supervised evaluation datasets.
+This populates [data/](data/) with pretraining splits and supervised evaluation datasets.
 
 Each tissue ships a `consensus_hvg.csv` defining the gene vocabulary.
 
 The download also places pretrained model weights under [model/weights/](model/weights/).
 
 ## 3. Pretrain
-Run the scripts below to train the model backbones from scratch. Note that this pretraining is optional and can take a significant amount of time (depending on your hardware). Since the pretrained weights were already downloaded in Step 2, you can skip this step and proceed directly to Section 4.
+This pretraining step is optional and may require significant computational time depending on your hardware. Given that the pretrained weights were already downloaded in Step 2, you can safely skip this step and proceed directly to Section 4. To reproduce the pretraining of model backbones from scratch, execute the commands below
 
 ```bash
 bash model/train_leaf.sh   
 bash model/train_root.sh   
 ```
 
-Both wrappers `cd` to the repo root and invoke `python -m model.train` with the tissue-appropriate `--gene_num` and data paths. Defaults: depth 3, batch size 20, embedding dim 200, 10 heads, LR 1e-4, mask prob 0.20, 50 epochs.
-
-If you train your own model and want to evaluate it, update the `CKPT_PATH` variable at the top of [evaluate/finetune_root.sh](evaluate/finetune_root.sh) or [evaluate/finetune_leaf.sh](evaluate/finetune_leaf.sh) to point at your new checkpoint before running 4.
-
 ## 4. Fine-tune and evaluate
 
+The following scripts are provided to fine-tune the downstream classifiers on top of the scAraFM representations and evaluate their performance across the different experimental splits (random, replicate, and cross-experiment)
+
 ```bash
-bash evaluate/finetune_leaf.sh   # 4 leaf datasets:  4 random split + 1 replicate split + 2 cross-experiment blocks
-bash evaluate/finetune_root.sh   # 5 root datasets: 5 random split + 1 replicate split blocks
+bash evaluate/finetune_leaf.sh  
+bash evaluate/finetune_root.sh   
 ```
 
-Each wrapper iterates over the per-tissue evaluation datasets and calls `python -m evaluate.finetune` with a `--ckpt_path` pointing at a `best_model_*.pth`. For each dataset the script:
+For each dataset the script:
 
-1. Generates CLS + per-gene embeddings via [evaluate/generate_embeddings.py](evaluate/generate_embeddings.py) (single forward pass, written to two `cache/`-backed memmaps).
-2. Runs `ModelBattery` from [evaluate/utils.py](evaluate/utils.py): logreg / xgboost / MLP / ensemble / PCA-reduced variants.
+1. Generates CLS + per-gene embeddings via [evaluate/generate_embeddings.py](evaluate/generate_embeddings.py).
+2. Runs `ModelBattery` from [evaluate/utils.py](evaluate/utils.py): LogReg / XGBoost / MLP / ensemble / PCA-reduced variants.
 3. Runs the scBERT-style fine-tuning head.
 
 Per-dataset results are written under `results/{root,leaf}/{dataset_id}/`.
 
+Note: If you pretrain your own model and want to evaluate it, update the CKPT_PATH variable at the top of evaluate/finetune_*.sh to point at your new checkpoint.
+
 ## 5. Hardware requirements
+
+
+### GPU
+
+Inference-only forward pass at batch size 8 with a sequence of `n_genes + 1` tokens fits comfortably on a single **24 GB GPU**. Pretraining at batch size 20 with the same architecture is the tighter constraint; we used a single 24 GB GPU.
+
+### Host RAM
+
+**32 GB** is comfortable for all evaluation datasets shipped here.
+
+### Disk (cache)
 
 The dominant resource consumer during fine-tuning is the **per-gene embedding cache** written under `cache/`. It is a dense float32 array of shape `(n_cells, n_genes, embedding_dim)`, so:
 
@@ -66,18 +77,6 @@ cache_bytes_per_cell ≈ n_genes × embedding_dim × 4
                      ≈ 3.52 MB / cell  (root, 4397 genes × 200 dim)
                      ≈ 3.24 MB / cell  (leaf, 4054 genes × 200 dim)
 ```
-
-### GPU
-
-Inference-only forward pass at batch size 8 with a sequence of `n_genes + 1` tokens fits comfortably on a single **24 GB GPU**. Pretraining at batch size 20 with the same architecture is the tighter constraint; we used a single 24 GB GPU.
-
-### Host RAM
-
-Peak host RAM is dominated by the AnnData load and the ModelBattery classifiers (xgboost grid search + MLP). Order of magnitude: ~2× the on-disk `.h5ad` size, plus ~4–8 GB for the classifiers. **32 GB** is comfortable for all evaluation datasets shipped here.
-
-### Disk (cache)
-
-Per-dataset cache sizes are computed exactly from the formula above using cell counts read directly from each `.h5ad` file:
 
 **Leaf**:
 
@@ -101,32 +100,20 @@ Per-dataset cache sizes are computed exactly from the formula above using cell c
 
 **Recommended free disk: ≥130 GB for root evaluation, ≥220 GB for leaf evaluation**.
 
-## 6. Reproduce results 
+## 6. Generate figures
+
+If evaluate/finetune_leaf.sh is run, then the replication of paper main figures can be done through:
 
 ```bash
-conda env create -f environment.yml
-conda activate scAraFM
+FIG_ARGS=(
+    --final-leaf-dir results/final_leaf
+    --random-results-dir results/leaf/GSE273033
+    --random-json-path results/GSE_RANDOM_SPLIT/GSE273033/experiment_results.json
+    --replicate-json-path results/final_leaf/GSE273033/experiment_results.json
+    --cross-json-path results/final_leaf/GSE273033_2_ERP132245/experiment_results_GSE273033_to_ERP132245.json
+)
 
-python data_download/download_data.py   # data + pretrained weights
-
-bash evaluate/finetune_root.sh          # root evaluation (5 datasets)
-bash evaluate/finetune_leaf.sh          # leaf evaluation (4 datasets)
-
-
+python -m figures.create_3panel_figure_heatmap "${FIG_ARGS[@]}" \
+    --outpath figures/composite_leaf_3panel_aucroc_heatmap.png
 ```
-
-Results land under `results/{root,leaf}/{dataset_id}/`. Pretraining is optional; the downloaded weights are used by default (see 3).
-
-
-## 7. Generate figures
-
-Run from the repo root after 4/6 produces the evaluation results. Each script writes a
-`.png` + matching `.svg` under `evaluation/figure_creation/`, and defaults to `--metric aucroc`.
-
-| Paper figure | Command | Output |
-|---|---|---|
-| **Figure 2** | `python -m figures.create_3panel_figure_heatmap` | `evaluation/figure_creation/composite_leaf_3panel_aucroc_heatmap.png` |
-| **Sup. Figure 1**  | `python -m figures.create_subplot_matrix_figure --outdir evaluation/figure_creation/leaf --n-bootstrap 100` | `evaluation/figure_creation/leaf/subplot_matrix_aucroc_bootstrap100.png` |
-| **Sup. Figure 2**  | `python -m figures.create_subplot_matrix_figure --results-dir results/final_root --outdir evaluation/figure_creation/root --n-bootstrap 100 --random-results-dir "" --random-json-path ""` | `evaluation/figure_creation/root/subplot_matrix_aucroc_bootstrap100.png` |
-| **Sup. Figure 3**  | `python -m figures.create_root_heatmap` | `evaluation/figure_creation/root_heatmap_aucroc.png` |
 
