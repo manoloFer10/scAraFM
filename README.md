@@ -1,6 +1,6 @@
 # scAraFM
 
-This repository contains the source code and download the data required to reproduce the results presented in “On the robustness of scRNA-seq foundation models for plant perturbation response prediction under cross-experiment shift” (under consideration for publication). A preprint of the manuscript is available at [![bioRxiv](https://doi.org/10.64898/2026.08.21.746324)]
+This repository contains the source code and download the data required to reproduce the results presented in “On the robustness of scRNA-seq foundation models for plant perturbation response prediction under cross-experiment shift” (under consideration for publication). A preprint of the manuscript is available at [![bioRxiv](https://img.shields.io/badge/bioRxiv-2025.08.31.672925-b31b1b.svg)](https://doi.org/10.64898/2026.08.21.746324)
 
 This repo packages the end-to-end workflow to reproduce pretraining and downstream evaluation.
 
